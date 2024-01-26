@@ -5,10 +5,11 @@ import { createItemDto } from './dto/create-item.dto';
 import { selectAllDto } from './dto/select-all.dto';
 import { editItemDto } from './dto/edit-item.dto';
 import { Request } from 'express';
-import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Item } from './items.entity';
 
 @ApiTags('List endpoints')
+@ApiBearerAuth('Bearer token auth')
 @Controller('items')
 export class ItemsController {
     constructor(private itemsService: ItemsService) {}
