@@ -1,6 +1,6 @@
 import { CanActivate, ExecutionContext, ForbiddenException, Injectable, UnauthorizedException } from '@nestjs/common'
 import { Observable } from 'rxjs'
-import { JwtService } from '@nestjs/jwt'
+import { JsonWebTokenError, JwtService } from '@nestjs/jwt'
 
 @Injectable()
 export class JwtGuard implements CanActivate {
@@ -11,12 +11,14 @@ export class JwtGuard implements CanActivate {
     try {
       const authToken = request.headers.authorization.split(' ')[1]
       if (!authToken) throw new UnauthorizedException({ message: 'User not authorized!' })
-      request.user = this.jwtService.verify(authToken)
+      this.jwtService.verify(authToken)
       return true
     } catch (err: any) {
-      //Error handler for token expire
-      //throw new UnauthorizedException({ message: 'User not authorized!'})
-      throw new ForbiddenException('Token auth failed!')
+      if (err instanceof JsonWebTokenError && err.name === 'TokenExpiredError') {
+        throw new ForbiddenException('Token expired!')
+      }
+
+      throw new UnauthorizedException('User not authorized!')
     }
   }
 }

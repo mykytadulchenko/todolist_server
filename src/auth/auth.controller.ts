@@ -1,7 +1,7 @@
 import { Controller, Get, Headers, Res } from '@nestjs/common'
-import { AuthService } from './auth.service'
 import { Response } from 'express'
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger'
+import { AuthService } from './auth.service'
 
 @ApiTags('Auth endpoints')
 @Controller('auth')

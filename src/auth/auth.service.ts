@@ -42,7 +42,7 @@ export class AuthService {
       await this.setTokens(payload.id, accessToken, refreshToken)
       return accessToken
     } catch (err: any) {
-      throw new UnauthorizedException({ message: 'User not authorized!' })
+      throw new UnauthorizedException('User not authorized!')
     }
   }
 }

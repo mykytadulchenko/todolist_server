@@ -1,11 +1,12 @@
 import { Injectable } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
-import { User } from './users.entity'
 import { Repository } from 'typeorm'
-import * as bcrypt from 'bcrypt'
 import { AuthService } from 'src/auth/auth.service'
+import { User } from './users.entity'
 import { createUserDto } from './dto/create-user.dto'
 import { authUserDto } from './dto/auth-user.dto'
+import { passwordCompare, passwordHasher } from './users.helpers'
+import { ROLES } from './users.enums'
 
 @Injectable()
 export class UsersService {
@@ -15,22 +16,11 @@ export class UsersService {
     private authService: AuthService,
   ) {}
 
-  passwordHasher = async (password: string) => {
-    const saltRounds = Number(process.env.SALT_ROUNDS)
-    const hash = await bcrypt.hash(password, saltRounds)
-    return hash
-  }
-
-  passwordCompare = async (password: string, hash: string) => {
-    const result = await bcrypt.compare(password, hash)
-    return result
-  }
-
   async signIn(dto: authUserDto) {
     const { login, password } = dto
     const user = await this.userRepository.createQueryBuilder('user').select().where('user.login = :login', { login }).getOne()
 
-    const passwordCheck = this.passwordCompare(password, user.password)
+    const passwordCheck = passwordCompare(password, user.password)
     if (!user || !passwordCheck) return null
     const { accessToken, refreshToken } = this.authService.generateTokens({
       id: user.id,
@@ -42,12 +32,12 @@ export class UsersService {
 
   async signUp(dto: createUserDto) {
     const { login, email, password } = dto
-    const hashedPass = await this.passwordHasher(password)
+    const hashedPass = await passwordHasher(password)
     const user = await this.userRepository
       .createQueryBuilder()
       .insert()
       .into(User)
-      .values({ login, email, password: hashedPass })
+      .values({ login, email, password: hashedPass, role: ROLES.user })
       .returning(['id', 'login'])
       .execute()
 

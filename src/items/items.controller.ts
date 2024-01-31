@@ -1,11 +1,11 @@
 import { Body, Controller, Delete, Get, Param, Post, Put, Req, UseGuards, UsePipes, ValidationPipe } from '@nestjs/common'
 import { JwtGuard } from 'src/auth/jwt.guard'
+import { Request } from 'express'
+import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger'
 import { ItemsService } from './items.service'
 import { createItemDto } from './dto/create-item.dto'
 import { selectAllDto } from './dto/select-all.dto'
 import { editItemDto } from './dto/edit-item.dto'
-import { Request } from 'express'
-import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger'
 import { Item } from './items.entity'
 
 @ApiTags('List endpoints')
@@ -22,8 +22,8 @@ export class ItemsController {
   })
   @UseGuards(JwtGuard)
   @Get('/:id')
-  async getItems(@Param('id') id: string) {
-    const response = await this.itemsService.getItems(id)
+  async getItems(@Req() request: Request) {
+    const response = await this.itemsService.getItems(request.user.id)
     return response
   }
 
@@ -35,10 +35,15 @@ export class ItemsController {
   })
   @UseGuards(JwtGuard)
   @Post()
-  @UsePipes(new ValidationPipe())
-  async addItem(@Body() dto: createItemDto) {
-    const { value, userId } = dto
-    const response = await this.itemsService.addItem(value, userId)
+  @UsePipes(
+    new ValidationPipe({
+      whitelist: true,
+    }),
+  )
+  async addItem(@Req() request: Request, @Body() dto: createItemDto) {
+    console.log(dto)
+    const { value } = dto
+    const response = await this.itemsService.addItem(value, request.user.id)
     return response
   }
 
@@ -50,10 +55,14 @@ export class ItemsController {
   })
   @UseGuards(JwtGuard)
   @Put('/bulk-select')
-  @UsePipes(new ValidationPipe())
-  async selectAll(@Body() dto: selectAllDto) {
-    const { selectAll, userId } = dto
-    const response = await this.itemsService.selectAll(selectAll, userId)
+  @UsePipes(
+    new ValidationPipe({
+      whitelist: true,
+    }),
+  )
+  async selectAll(@Req() request: Request, @Body() dto: selectAllDto) {
+    const { selectAll } = dto
+    const response = await this.itemsService.selectAll(selectAll, request.user.id)
     return response
   }
 
@@ -65,10 +74,14 @@ export class ItemsController {
   })
   @UseGuards(JwtGuard)
   @Put('/:id')
-  @UsePipes(new ValidationPipe())
-  async editItem(@Body() dto: editItemDto) {
-    const { id, value, completed, user_id } = dto
-    const response = await this.itemsService.editItem(id, value, completed, user_id)
+  @UsePipes(
+    new ValidationPipe({
+      whitelist: true,
+    }),
+  )
+  async editItem(@Req() request: Request, @Body() dto: editItemDto) {
+    const { id, value, completed } = dto
+    const response = await this.itemsService.editItem(id, value, completed, request.user.id)
     return response
   }
 
@@ -96,7 +109,6 @@ export class ItemsController {
   @UseGuards(JwtGuard)
   @Delete('/:id')
   async deleteItem(@Param('id') id: string, @Req() request: Request) {
-    console.log('test')
     const response = await this.itemsService.deleteItem(id, request.user.id)
     return response
   }
